@@ -53,7 +53,7 @@ test("keeps fixed birthday data and seven-scene runtime inside the product surfa
   assert.match(page, /point-cloud/);
   assert.match(page, /visibilitychange/);
   assert.match(page, /setPointerCapture/);
-  assert.match(page, /storeWishInVessel/);
+  assert.match(page, /sealWishInBottle/);
   assert.match(layout, /Birthday Generator — Prototype/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
 });
@@ -73,6 +73,9 @@ test("keeps the recipient prototype as one self-contained HTML file", async () =
   assert.match(prototype, /data-blow/);
   assert.match(prototype, /class="smoke one"/);
   assert.match(prototype, /const confetti/);
+  assert.match(prototype, /wish-letter-stage/);
+  assert.match(prototype, /rocket-bottle/);
+  assert.match(prototype, /firework-overlay/);
   assert.doesNotMatch(prototype, /<script[^>]+\bsrc=/i);
   assert.doesNotMatch(prototype, /<link[^>]+\bhref=/i);
   assert.doesNotThrow(() => new Function(script));

@@ -1357,19 +1357,22 @@ textarea:focus-visible {
   border-radius: 0;
   box-shadow: none;
   opacity: 0;
-  transform: translate(-50%, -48%) scale(0.14);
-  animation: cinematic-letter 1.78s cubic-bezier(0.18, 0.82, 0.27, 1) both;
+  will-change: transform, opacity, filter;
+  backface-visibility: hidden;
+  transform: translate3d(-50%, -48%, 0) scale(0.14);
+  animation: cinematic-letter 2.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes tassel-sway { to { transform: rotate(5deg) translateY(0.14rem); } }
 @keyframes balloon-bob { 50% { transform: translateY(-0.7rem) rotate(5deg); } }
 @keyframes bear-bob { 50% { transform: translateY(-0.34rem) rotate(2deg); } }
 @keyframes cinematic-letter {
-  0% { opacity: 0; transform: translate(-50%, -44%) scale(0.12); filter: blur(1.3rem); }
-  23% { opacity: 1; transform: translate(-50%, -48%) scale(0.68); filter: blur(0); }
-  58% { opacity: 1; transform: translate(-50%, -48%) scale(1); filter: blur(0); }
-  82% { opacity: 0.78; transform: translate(-50%, -50%) scale(1.16); filter: blur(0.1rem); }
-  100% { opacity: 0; transform: translate(-50%, -53%) scale(1.38); filter: blur(0.8rem); }
+  0% { opacity: 0; transform: translate3d(-50%, -46%, 0) scale(0.11); filter: blur(1.15rem); }
+  18% { opacity: 0.82; transform: translate3d(-50%, -47%, 0) scale(0.48); filter: blur(0.25rem); }
+  53% { opacity: 1; transform: translate3d(-50%, -48%, 0) scale(1); filter: blur(0); }
+  72% { opacity: 0.98; transform: translate3d(-50%, -49%, 0) scale(1.08); filter: blur(0); }
+  88% { opacity: 0.64; transform: translate3d(-50%, -51%, 0) scale(1.21); filter: blur(0.12rem); }
+  100% { opacity: 0; transform: translate3d(-50%, -53%, 0) scale(1.32); filter: blur(0.7rem); }
 }
 
 @media (max-width: 780px) {
@@ -1834,4 +1837,185 @@ textarea:focus-visible {
   .cosmic-stage { transition: none; }
   .vessel-flyby .wish-form-wrap,
   .vessel-rolling .wish-form-wrap { animation: none; }
+}
+
+/* Scene 5: the wish is written on paper, then sealed inside a glass bottle. */
+.scene-5 .wish-scene {
+  position: relative;
+  isolation: isolate;
+  padding-top: clamp(3.5rem, 8vh, 5.5rem);
+}
+
+.scene-5 .wish-form-wrap {
+  position: relative;
+  z-index: 2;
+  overflow: visible;
+  padding: clamp(1.25rem, 4vw, 2.1rem);
+  border: 1px solid rgba(139, 93, 64, 0.28);
+  border-radius: 0.2rem 0.2rem 1.1rem 0.35rem;
+  color: #513e53;
+  background:
+    linear-gradient(90deg, transparent 0 2.6rem, rgba(221, 132, 145, 0.25) 2.65rem 2.73rem, transparent 2.78rem),
+    repeating-linear-gradient(180deg, transparent 0 2rem, rgba(153, 116, 136, 0.15) 2.04rem 2.1rem),
+    linear-gradient(135deg, #fffdf3, #fff5d9 78%, #f1d7c1);
+  box-shadow: 0 1.1rem 2.6rem rgba(16, 8, 38, 0.24), inset 0 1px rgba(255, 255, 255, 0.95);
+  backdrop-filter: none;
+  transform-origin: 77% 76%;
+}
+
+.scene-5 .wish-form-wrap h2,
+.scene-5 .wish-form-wrap .eyebrow {
+  color: #76526a;
+}
+
+.scene-5 .wish-disclosure { display: none; }
+
+.scene-5 .wish-form-wrap textarea {
+  min-height: 8.7rem;
+  color: #60495c;
+  background: rgba(255, 255, 255, 0.34);
+  border-color: rgba(150, 103, 127, 0.24);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.82);
+}
+
+.message-signoff { display: none; }
+.ascii-caption span { display: none; }
+
+.scene-5 .wish-form-wrap h2 {
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-style: normal;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.candle-stage.candle-blown + .blow-status { font-size: 0; }
+.candle-stage.candle-blown + .blow-status::after {
+  content: "Điều ước đã gửi tới Bụt ✨";
+  font-size: 0.9rem;
+}
+
+.scene-5 .wish-form-wrap textarea::placeholder { color: rgba(107, 77, 96, 0.56); }
+.scene-5 .wish-status { color: #7a6472; }
+.scene-5 .wish-form-wrap > .text-button { display: none; }
+
+.scene-5 .wish-actions .primary-button { font-size: 0; }
+.scene-5 .wish-actions .primary-button::after { content: "Wish"; font-size: 0.88rem; }
+.scene-5 .wish-actions .primary-button:disabled::after { content: "Sealing…"; }
+
+.scene-5 .wish-scene::after {
+  position: absolute;
+  z-index: 1;
+  right: clamp(0rem, 5vw, 3rem);
+  bottom: clamp(0rem, 4vh, 2rem);
+  width: clamp(6.2rem, 16vw, 8.6rem);
+  height: clamp(9.2rem, 24vw, 12rem);
+  content: "";
+  opacity: 0;
+  border: 2px solid rgba(210, 247, 255, 0.82);
+  border-radius: 36% 36% 42% 42% / 19% 19% 31% 31%;
+  background:
+    linear-gradient(90deg, transparent 0 16%, rgba(255, 255, 255, 0.52) 22% 27%, transparent 33% 67%, rgba(143, 226, 245, 0.24) 79% 100%),
+    radial-gradient(ellipse at 50% 70%, rgba(130, 228, 239, 0.24), rgba(98, 114, 211, 0.18) 62%, rgba(255, 255, 255, 0.08)),
+    rgba(185, 231, 245, 0.2);
+  box-shadow: 0 1.2rem 2rem rgba(6, 11, 46, 0.3), inset 0 0 1.5rem rgba(240, 255, 255, 0.48);
+  transform: translateY(0.8rem) scale(0.72);
+}
+
+.scene-5 .wish-scene::before {
+  position: absolute;
+  z-index: 2;
+  right: clamp(1.2rem, 8vw, 5rem);
+  bottom: clamp(3rem, 9vw, 4.5rem);
+  width: clamp(3.8rem, 10vw, 5.2rem);
+  height: clamp(1rem, 2.4vw, 1.35rem);
+  content: "";
+  opacity: 0;
+  border: 1px solid rgba(122, 83, 91, 0.55);
+  border-radius: 50%;
+  background: repeating-linear-gradient(180deg, #fff8d8 0 0.2rem, #dfbf93 0.22rem 0.3rem);
+  box-shadow: inset 0.4rem 0 rgba(255, 255, 255, 0.82), 0 0.25rem 0.5rem rgba(31, 18, 52, 0.16);
+  transform: rotate(-7deg) scale(0.25);
+}
+
+.scene-5 .vessel-rolling .wish-form-wrap { animation: wish-paper-seal 1.55s cubic-bezier(0.42, 0, 0.18, 1) both; }
+.scene-5 .vessel-rolling.wish-scene::after { animation: bottle-appear 0.42s ease-out 0.8s both; }
+.scene-5 .vessel-rolling.wish-scene::before { animation: note-in-bottle 0.55s cubic-bezier(0.2, 0.9, 0.24, 1) 0.94s both; }
+
+@keyframes wish-paper-seal {
+  0% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0) scale(1); filter: none; }
+  34% { opacity: 1; transform: translate3d(1.8rem, 0.7rem, 0) rotate(28deg) scale(0.77); }
+  68% { opacity: 0.92; transform: translate3d(5.6rem, 2rem, 0) rotate(410deg) scale(0.34); filter: saturate(1.2); }
+  100% { opacity: 0; transform: translate3d(6.3rem, 2.75rem, 0) rotate(720deg) scale(0.08); filter: blur(1px); }
+}
+
+@keyframes bottle-appear { to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes note-in-bottle { to { opacity: 1; transform: rotate(-7deg) scale(1); } }
+
+@media (max-width: 780px) {
+  .scene-5 .wish-form-wrap { padding: 1.15rem; }
+  .scene-5 .wish-scene::after { right: 0.25rem; bottom: -0.5rem; }
+  .scene-5 .wish-scene::before { right: 1.1rem; bottom: 3rem; }
+  .scene-5 .vessel-rolling .wish-form-wrap { animation-name: wish-paper-seal-mobile; }
+}
+
+@keyframes wish-paper-seal-mobile {
+  0% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0) scale(1); }
+  68% { opacity: 0.92; transform: translate3d(2.5rem, 4.6rem, 0) rotate(410deg) scale(0.33); }
+  100% { opacity: 0; transform: translate3d(3.1rem, 5.1rem, 0) rotate(720deg) scale(0.08); filter: blur(1px); }
+}
+
+/* The writing area follows the paper ruling, and the sheet visibly turns into a roll. */
+.scene-5 .wish-form-wrap textarea {
+  min-height: 8.1rem;
+  max-height: 12.3rem;
+  padding: 0.48rem 1rem 0.35rem;
+  resize: none;
+  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  font-size: clamp(1.16rem, 2.1vw, 1.58rem);
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  line-height: 2.1rem;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 2.02rem, rgba(139, 95, 127, 0.3) 2.04rem 2.1rem),
+    rgba(255, 255, 255, 0.26);
+  background-position: 0 0.48rem;
+}
+
+.scene-5 .vessel-rolling .wish-form-wrap::after {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  width: min(78%, 13rem);
+  height: 3rem;
+  content: "";
+  pointer-events: none;
+  border: 1px solid rgba(132, 87, 100, 0.52);
+  border-radius: 50% / 45%;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 0.58rem, rgba(138, 95, 126, 0.32) 0.62rem 0.67rem),
+    linear-gradient(90deg, #e5c18d, #fff8dc 24%, #fffdf1 53%, #e8c590);
+  box-shadow: inset 0.55rem 0 rgba(255, 255, 255, 0.62), inset -0.65rem 0 rgba(121, 83, 98, 0.2), 0 0.45rem 0.75rem rgba(43, 21, 54, 0.28);
+  transform-origin: 100% 50%;
+  animation: app-paper-cylinder-seal 1.55s cubic-bezier(0.42, 0, 0.18, 1) both;
+}
+
+@keyframes app-paper-cylinder-seal {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(1, 0.08) rotate(0deg); }
+  22% { opacity: 1; transform: translate(-50%, -50%) scale(1, 0.22) rotate(2deg); }
+  48% { opacity: 1; transform: translate(-36%, -42%) scale(0.76, 1) rotate(26deg); }
+  76% { opacity: 1; transform: translate(29%, 5%) scale(0.43, 0.92) rotate(376deg); }
+  100% { opacity: 0; transform: translate(48%, 31%) scale(0.12, 0.56) rotate(720deg); filter: blur(1px); }
+}
+
+@keyframes wish-paper-seal {
+  0% { opacity: 1; transform: perspective(900px) translate3d(0, 0, 0) rotateY(0) rotate(0) scale(1); }
+  30% { opacity: 1; transform: perspective(900px) translate3d(1.4rem, 0.5rem, 0) rotateY(24deg) rotate(12deg) scale(0.92, 0.86); }
+  52% { opacity: 0.3; transform: perspective(900px) translate3d(3.8rem, 1.45rem, 0) rotateY(72deg) rotate(25deg) scale(0.57, 0.24); }
+  100% { opacity: 0; transform: perspective(900px) translate3d(6.3rem, 2.75rem, 0) rotateY(88deg) rotate(42deg) scale(0.1, 0.08); filter: blur(1px); }
+}
+
+@media (max-width: 780px) {
+  .scene-5 .wish-form-wrap textarea { font-size: 1.1rem; }
+  .scene-5 .vessel-rolling .wish-form-wrap::after { width: min(78%, 11rem); }
 }

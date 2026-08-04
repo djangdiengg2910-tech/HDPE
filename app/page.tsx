@@ -14,6 +14,7 @@ type CanvasMode = "space" | "reveal" | "wish" | "cake" | "finale";
 type WishStatus =
   | "idle"
   | "submitting"
+  | "rolling"
   | "success"
   | "error"
   | "offline"
@@ -364,6 +365,7 @@ function CosmicStage({
     const firework = Array.from({ length: reducedMotion ? 44 : 135 }, (_, index) => ({
       angle: (Math.PI * 2 * index) / (reducedMotion ? 44 : 135) + Math.random() * 0.12,
       speed: Math.random() * 0.78 + 0.23,
+      depth: Math.random() * 2 - 1,
       size: Math.random() * 1.9 + 0.7,
       color: ["#fff0a1", "#98f5ff", "#f7a8d6", "#c6a9ff"][index % 4],
     }));
@@ -477,11 +479,9 @@ function CosmicStage({
       } else if (stageMode === 5 && candleOutRef.current) {
         if (!candleStartedAt) candleStartedAt = time;
         const launch = Math.min(1, (time - candleStartedAt) / (reducedMotion ? 1 : 3600));
-        const orbit = Math.min(1, launch / 0.62);
-        const angle = orbit * Math.PI * 2;
-        x = width * 0.5 + Math.cos(angle) * width * 0.18 * (1 - Math.max(0, launch - 0.5) * 1.5);
-        y = height * 0.45 + Math.sin(angle) * height * 0.13 - Math.max(0, launch - 0.55) * height * 1.5;
-        rotation = angle + 0.3;
+        x = width * 0.5;
+        y = height * 0.47 - launch * launch * height * 1.88;
+        rotation = 0;
         size *= 0.9 - launch * 0.35;
       }
 
@@ -496,19 +496,76 @@ function CosmicStage({
       context.strokeStyle = "rgba(220,247,255,.82)";
       context.lineWidth = Math.max(1, size * 0.045);
       context.beginPath();
-      context.roundRect(-size, -size * 0.44, size * 2, size * 0.88, size * 0.42);
+      context.moveTo(-size * 0.27, -size * 0.82);
+      context.lineTo(size * 0.27, -size * 0.82);
+      context.lineTo(size * 0.31, -size * 0.5);
+      context.bezierCurveTo(size * 0.68, -size * 0.38, size * 0.77, size * 0.12, size * 0.57, size * 0.57);
+      context.bezierCurveTo(size * 0.37, size * 0.92, -size * 0.37, size * 0.92, -size * 0.57, size * 0.57);
+      context.bezierCurveTo(-size * 0.77, size * 0.12, -size * 0.68, -size * 0.38, -size * 0.31, -size * 0.5);
+      context.closePath();
       context.fill();
       context.stroke();
       context.fillStyle = "rgba(255,245,203,.92)";
-      context.fillRect(-size * 0.16, -size * 0.17, size * 0.82, size * 0.34);
+      context.save();
+      context.rotate(-0.1);
+      context.fillRect(-size * 0.32, -size * 0.04, size * 0.64, size * 0.25);
       context.strokeStyle = "rgba(90,51,137,.7)";
-      context.strokeRect(-size * 0.16, -size * 0.17, size * 0.82, size * 0.34);
-      context.fillStyle = "#dfb75b";
-      context.fillRect(-size * 0.62, -size * 0.29, size * 0.22, size * 0.58);
-      context.fillStyle = "#3ee8f0";
+      context.strokeRect(-size * 0.32, -size * 0.04, size * 0.64, size * 0.25);
+      context.restore();
+      context.fillStyle = "#d8b17c";
+      context.fillRect(-size * 0.28, -size * 1.22, size * 0.56, size * 0.33);
+      context.fillStyle = "rgba(82,55,41,.68)";
+      for (let index = 0; index < 4; index += 1) {
+        context.beginPath();
+        context.arc((-0.16 + index * 0.11) * size, -size * (1.08 + (index % 2) * 0.06), Math.max(0.7, size * 0.035), 0, Math.PI * 2);
+        context.fill();
+      }
+      context.strokeStyle = "rgba(175,126,85,.95)";
+      context.lineWidth = Math.max(1, size * 0.055);
+      for (let index = 0; index < 5; index += 1) {
+        const y = -size * 0.53 + index * size * 0.09;
+        context.beginPath();
+        context.moveTo(-size * 0.48, y);
+        context.lineTo(size * 0.48, y + size * 0.02);
+        context.stroke();
+      }
+      context.lineWidth = Math.max(1, size * 0.035);
       context.beginPath();
-      context.arc(-size * 0.75, 0, size * 0.13, 0, Math.PI * 2);
+      context.moveTo(size * 0.28, -size * 0.16);
+      context.quadraticCurveTo(size * 0.64, size * 0.12, size * 0.3, size * 0.44);
+      context.stroke();
+      context.save();
+      context.translate(size * 0.25, size * 0.51);
+      context.rotate(0.2);
+      context.fillStyle = "#f4deb1";
+      context.strokeStyle = "#967152";
+      context.lineWidth = Math.max(1, size * 0.025);
+      context.beginPath();
+      for (let index = 0; index < 10; index += 1) {
+        const radius = index % 2 === 0 ? size * 0.2 : size * 0.085;
+        const angle = -Math.PI / 2 + index * Math.PI / 5;
+        const pointX = Math.cos(angle) * radius;
+        const pointY = Math.sin(angle) * radius;
+        if (index === 0) context.moveTo(pointX, pointY);
+        else context.lineTo(pointX, pointY);
+      }
+      context.closePath();
       context.fill();
+      context.stroke();
+      context.restore();
+      if (stageMode === 5 && candleOutRef.current) {
+        context.fillStyle = "#4c477d";
+        context.fillRect(-size * 0.3, size * 0.84, size * 0.6, size * 0.22);
+        context.fillStyle = "#70dce9";
+        context.fillRect(-size * 0.16, size * 1.03, size * 0.32, size * 0.12);
+        context.fillStyle = "rgba(255,199,104,.92)";
+        context.beginPath();
+        context.moveTo(0, size * 1.65);
+        context.lineTo(-size * 0.18, size * 1.12);
+        context.lineTo(size * 0.18, size * 1.12);
+        context.closePath();
+        context.fill();
+      }
       context.restore();
 
       if (stageMode === 4 && vesselPhaseRef.current === "rolling") {
@@ -525,22 +582,23 @@ function CosmicStage({
       const elapsed = Math.max(0, time - burstStartedAt);
       const cycle = reducedMotion ? 0.62 : Math.min(1, elapsed / 2200);
       const centerX = width * 0.5;
-      const centerY = height * 0.14;
-      const radius = Math.min(width, height) * (0.05 + cycle * 0.37);
+      const centerY = height * 0.36;
+      const radius = Math.max(width, height) * (0.08 + cycle * 0.78);
       for (const spark of firework) {
         const distance = radius * spark.speed;
-        context.globalAlpha = (1 - cycle * 0.72) * (0.66 + spark.speed * 0.34);
+        const projection = 1 / (1 + Math.max(-0.55, spark.depth * cycle * 0.72));
+        context.globalAlpha = (1 - cycle * 0.72) * (0.5 + projection * 0.5);
         context.strokeStyle = spark.color;
         context.fillStyle = spark.color;
-        context.lineWidth = Math.max(1, spark.size * (1 - cycle * 0.45));
-        const x = centerX + Math.cos(spark.angle) * distance;
-        const y = centerY + Math.sin(spark.angle) * distance + cycle * cycle * height * 0.22;
+        context.lineWidth = Math.max(1, spark.size * projection * (1 - cycle * 0.45));
+        const x = centerX + Math.cos(spark.angle) * distance * projection;
+        const y = centerY + Math.sin(spark.angle) * distance * projection + cycle * cycle * height * (0.2 + spark.depth * 0.04);
         context.beginPath();
-        context.moveTo(centerX + Math.cos(spark.angle) * distance * 0.58, centerY + Math.sin(spark.angle) * distance * 0.58);
+        context.moveTo(centerX + Math.cos(spark.angle) * distance * 0.42 * projection, centerY + Math.sin(spark.angle) * distance * 0.42 * projection);
         context.lineTo(x, y);
         context.stroke();
         context.beginPath();
-        context.arc(x, y, spark.size * (1 - cycle * 0.5), 0, Math.PI * 2);
+        context.arc(x, y, spark.size * projection * (1 - cycle * 0.5), 0, Math.PI * 2);
         context.fill();
       }
       context.globalAlpha = 1;
@@ -553,12 +611,15 @@ function CosmicStage({
         previousMode = stageMode;
         sceneStartedAt = time;
         candleStartedAt = 0;
-        if (stageMode === 6) burstStartedAt = time;
+        burstStartedAt = 0;
       }
       drawBackdrop(time);
       if (stageMode <= 5) drawCake(time, stageMode);
       if (stageMode >= 4 && stageMode <= 5) drawVessel(time, stageMode);
-      if (stageMode === 6) drawFirework(time);
+      if (stageMode === 5 && candleOutRef.current && candleStartedAt && time - candleStartedAt >= (reducedMotion ? 1 : 3420)) {
+        if (!burstStartedAt) burstStartedAt = time;
+        drawFirework(time);
+      }
       if (!reducedMotion) frame = requestAnimationFrame(draw);
     };
 
@@ -756,7 +817,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!isUnlocked || scene !== 0) return;
-    const introDuration = reducedMotion ? 2200 : birthdayData.initials.length * 1350 + 1250;
+    const introDuration = reducedMotion ? 2200 : birthdayData.initials.length * 1350 + 1750;
     const timeout = window.setTimeout(() => setScene(1), introDuration);
     return () => window.clearTimeout(timeout);
   }, [isUnlocked, reducedMotion, scene]);
@@ -769,7 +830,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!isUnlocked || scene !== 5 || !candleOut) return;
-    const timeout = window.setTimeout(() => setScene(6), reducedMotion ? 700 : 3900);
+    const timeout = window.setTimeout(() => setScene(6), reducedMotion ? 700 : 7000);
     return () => window.clearTimeout(timeout);
   }, [candleOut, isUnlocked, reducedMotion, scene]);
 
@@ -802,13 +863,14 @@ export default function Home() {
     setScene(next);
   };
 
-  const storeWishInVessel = () => {
+  const sealWishInBottle = () => {
     setVesselPhase("rolling");
     if (wishTimerRef.current) window.clearTimeout(wishTimerRef.current);
     wishTimerRef.current = window.setTimeout(() => {
       setVesselPhase("stored");
+      setScene(5);
       wishTimerRef.current = null;
-    }, reducedMotion ? 1 : 720);
+    }, reducedMotion ? 1 : 2300);
   };
 
   const submitWish = (event: FormEvent<HTMLFormElement>) => {
@@ -818,25 +880,8 @@ export default function Home() {
       return;
     }
 
-    if (!navigator.onLine) {
-      setWishStatus("offline");
-      return;
-    }
-
-    setWishStatus("submitting");
-    if (wishTimerRef.current) window.clearTimeout(wishTimerRef.current);
-    // Phase 1 deliberately keeps delivery local/mock. The state transitions and
-    // duplicate-submit guard are the same ones the Phase 4 API will use.
-    wishTimerRef.current = window.setTimeout(() => {
-      setWishStatus("success");
-      storeWishInVessel();
-    }, reducedMotion ? 1 : 820);
-  };
-
-  const skipWish = () => {
-    setWishStatus("skipped");
-    storeWishInVessel();
-    window.setTimeout(() => moveTo(5), reducedMotion ? 1 : 820);
+    setWishStatus("rolling");
+    sealWishInBottle();
   };
 
   const handleCakeKey = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -976,7 +1021,7 @@ export default function Home() {
             {scene === 2 && (
               <section className="message-scene" aria-labelledby="scene-title">
                 <div className="glass-card">
-                  <p className="card-label">dear {birthdayData.recipientName.split(" ").at(-1)},</p>
+                  <p className="card-label">Dear {birthdayData.recipientName.split(" ").at(-1)},</p>
                   <p className="birthday-message">{birthdayData.message}</p>
                   <span className="message-signoff">with a little stardust ✦</span>
                 </div>
@@ -1026,7 +1071,7 @@ export default function Home() {
                     />
                     <div className="wish-actions">
                       <span>{wish.length}/500</span>
-                      <button className="primary-button" type="submit" disabled={wishStatus === "submitting"}>
+                      <button className="primary-button" type="submit" disabled={wishStatus === "submitting" || wishStatus === "rolling"}>
                         {wishStatus === "submitting" ? "Đang gửi..." : "Gửi điều ước"}
                       </button>
                     </div>
@@ -1034,7 +1079,7 @@ export default function Home() {
                   <div className={`wish-status status-${wishStatus}`} role="status">
                     {getWishStatusText(wishStatus)}
                   </div>
-                  <button className="text-button" type="button" onClick={wishStatus === "success" || wishStatus === "skipped" ? () => moveTo(5) : skipWish}>
+                  <button className="text-button" type="button" onClick={() => undefined}>
                     {wishStatus === "success" || wishStatus === "skipped" ? "Tới ngọn nến" : "Cuộn vào lọ và tiếp tục"}
                   </button>
                 </div>
