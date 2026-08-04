@@ -10,8 +10,8 @@ export async function generateMetadata(): Promise<Metadata> {
     ? requestHost
     : "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") === "https" ? "https" : "http";
-  const title = "Birthday Generator — Prototype";
-  const description = "A local birthday experience prototype with seven scenes.";
+  const title = "Birthday Generator — Local MVP";
+  const description = "Create a self-contained, cosmic-blue birthday gift locally.";
 
   return {
     title,
@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: "website",
-      images: [{ url: "/og.png", alt: "Birthday Generator cosmic birthday cake" }],
+      images: [{ url: "/og.png", alt: "Birthday Generator cosmic blue preview" }],
     },
     twitter: {
       card: "summary_large_image",

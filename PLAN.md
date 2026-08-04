@@ -639,16 +639,16 @@ Hoàn thành khi:
 
 **Skill cần dùng:** form UX, File API, Canvas image processing, ASCII mapping, Blob/download, `iframe.srcdoc` sandbox và performance tuning.
 
-- [ ] Làm form nhập tên, ngày sinh, lời nhắn, ảnh và theme.
-- [ ] Validate bắt buộc, ngày hợp lệ, kích thước ảnh và độ dài lời nhắn.
-- [ ] Tạo initials tự động, cho xem trước nhưng không cần sửa thủ công ở MVP.
-- [ ] Đọc ảnh bằng File API; crop/fit về vùng chân dung.
-- [ ] Chuyển grayscale, chỉnh brightness/contrast và map pixel sang `@%#*+=-:. `.
-- [ ] Thêm control columns/detail, brightness, invert và mono/color.
-- [ ] Debounce quá trình render ASCII để UI không giật.
-- [ ] Tạo preview bằng `iframe srcdoc` trong sandbox phù hợp.
-- [ ] Tạo tên file an toàn từ tên người nhận và tải Blob HTML xuống.
-- [ ] Cảnh báo khi file vượt ngân sách dung lượng dự kiến.
+- [x] Làm form nhập tên, ngày sinh, lời nhắn, ảnh và theme.
+- [x] Validate bắt buộc, ngày hợp lệ, kích thước ảnh và độ dài lời nhắn.
+- [x] Tạo initials tự động, cho xem trước nhưng không cần sửa thủ công ở MVP.
+- [x] Đọc ảnh bằng File API; crop/fit về vùng chân dung.
+- [x] Chuyển grayscale, chỉnh brightness/contrast và map pixel sang `@%#*+=-:. `.
+- [x] Thêm control columns/detail, brightness, invert và mono/color.
+- [x] Debounce quá trình render ASCII để UI không giật.
+- [x] Tạo preview bằng `iframe srcdoc` trong sandbox phù hợp.
+- [x] Tạo tên file an toàn từ tên người nhận và tải Blob HTML xuống.
+- [x] Cảnh báo khi file vượt ngân sách dung lượng dự kiến.
 
 Hoàn thành khi:
 

@@ -10,6 +10,7 @@
     "dev:generator": "vinext dev",
     "dev:wish": "node ./wish-api/server.mjs",
     "sync:template-audio": "node ./scripts/embed-template-audio.mjs",
+    "sync:template-cursor": "node ./scripts/embed-template-cursor.mjs",
     "build": "vinext build",
     "start": "vinext start",
     "test": "npm run build && node --test tests/rendered-html.test.mjs tests/template-phase2.test.mjs",

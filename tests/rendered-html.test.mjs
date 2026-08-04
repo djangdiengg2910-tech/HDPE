@@ -25,50 +25,49 @@ async function render() {
   );
 }
 
-test("server-renders the birthday prototype instead of the starter skeleton", async () => {
+test("server-renders the local birthday Generator instead of the starter skeleton", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Birthday Generator — Prototype<\/title>/i);
-  assert.match(html, /Có một món quà đang chờ bạn\./);
-  assert.match(html, /Nhập ngày sinh để mở ra nhé/);
+  assert.match(html, /<title>Birthday Generator — Local MVP<\/title>/i);
+  assert.match(html, /Tạo thiệp sinh nhật sống động từ ảnh và lời nhắn của bạn\./);
+  assert.match(html, /Chọn ảnh chân dung/);
+  assert.match(html, /Tải file HTML tự chứa/);
   assert.doesNotMatch(html, /react-loading-skeleton|Building your site|codex-preview/i);
 });
 
-test("keeps fixed birthday data and seven-scene runtime inside the product surface", async () => {
-  const [page, layout, packageJson, styles] = await Promise.all([
+test("keeps the Phase 3 form, Canvas ASCII pipeline, sandbox preview, and Blob export in the product surface", async () => {
+  const [page, cursor, layout, packageJson, styles] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/custom-cursor.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("./package.json", templateRoot), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
-  assert.match(page, /const birthdayData/);
-  assert.match(page, /"Dramatic intro"/);
-  assert.match(page, /"Grand finale"/);
-  assert.match(page, /normalizeDateInput/);
-  assert.match(page, /CelebrationCanvas/);
-  assert.match(page, /function CosmicStage/);
-  assert.match(page, /function UnlockBalloonTransition/);
-  assert.match(page, /isUnlocking/);
-  assert.match(page, /length: reducedMotion \? 10 : 42/);
-  assert.match(page, /turnMusicOn\(true\)/);
-  assert.match(page, /turnMusicOn\(false, true\)/);
-  assert.match(page, /reducedMotion \? 180 : 1280/);
-  assert.match(page, /setIsUnlocking\(false\)/);
-  assert.match(page, /const introWords = useMemo/);
-  assert.match(page, /introWords\.map/);
-  assert.match(styles, /\.cinematic-initials span \{[\s\S]*?position: absolute;/);
-  assert.match(styles, /animation: cinematic-letter-pass 1\.54s/);
-  assert.doesNotMatch(styles, /font-size: clamp\(13rem, 38vw, 33rem\)/);
-  assert.doesNotMatch(styles, /scale\(1\.21\)/);
-  assert.match(page, /Sếp của chúng tôi đã đích thân chuẩn bị chiếc bánh/);
-  assert.match(page, /visibilitychange/);
-  assert.match(page, /setPointerCapture/);
-  assert.match(page, /sealWishInBottle/);
-  assert.match(layout, /Birthday Generator — Prototype/);
+  assert.match(page, /deriveInitials/);
+  assert.match(page, /function imageToAscii/);
+  assert.match(page, /getImageData/);
+  assert.match(page, /ASCII_DEBOUNCE_MS/);
+  assert.match(page, /FileReader|URL\.createObjectURL/);
+  assert.match(page, /renderBirthdayHtml/);
+  assert.match(page, /srcDoc=\{previewHtml\}/);
+  assert.match(page, /sandbox="allow-scripts"/);
+  assert.match(page, /new Blob\(\[html\]/);
+  assert.match(page, /safeFilename/);
+  assert.match(page, /FILE_SIZE_BUDGET/);
+  assert.match(page, /colorRows/);
+  assert.match(page, /CustomCursor/);
+  assert.match(cursor, /panda-bamboo-cursor-idle\.png/);
+  assert.match(cursor, /pointermove/);
+  assert.match(cursor, /is-tapping/);
+  assert.match(cursor, /prefers-reduced-motion/);
+  assert.match(styles, /\.generator-grid/);
+  assert.match(styles, /\.has-custom-cursor/);
+  assert.match(styles, /@media \(max-width: 920px\)/);
+  assert.match(layout, /Birthday Generator — Local MVP/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
 });
 
@@ -99,23 +98,22 @@ test("keeps the recipient prototype as one self-contained HTML file", async () =
   assert.match(prototype, /reducedMotion \? 180 : 1280/);
   assert.match(prototype, /cinematic-letter-pass/);
   assert.match(prototype, /const introWords = birthdayData\.recipientName\.trim\(\)\.split/);
+  assert.match(prototype, /function renderPortraitAscii\(\)/);
+  assert.match(prototype, /portraitColorRows/);
+  assert.match(prototype, /mountCustomCursor/);
+  assert.match(prototype, /data:image\/png;base64,/);
   assert.doesNotMatch(prototype, /<script[^>]+\bsrc=/i);
   assert.doesNotMatch(prototype, /<link[^>]+\bhref=/i);
   assert.doesNotThrow(() => new Function(script));
 });
 
-test("keeps music-box ambience and celebration sound effects self-contained", async () => {
-  const [page, prototype] = await Promise.all([
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../birthday-template/prototype.html", import.meta.url), "utf8"),
-  ]);
+test("keeps music and celebration sound effects in the self-contained recipient template", async () => {
+  const prototype = await readFile(new URL("../birthday-template/prototype.html", import.meta.url), "utf8");
 
-  for (const runtime of [page, prototype]) {
-    assert.match(runtime, /musicBoxMelody/);
-    assert.match(runtime, /createMusicBoxEngine/);
-    assert.match(runtime, /playNoiseBurst/);
-    assert.match(runtime, /backgroundTrack\.volume = .*shouldMute/);
-    assert.match(runtime, /playSoundEffect\("launch"\)|playEffect\("launch"\)/);
-    assert.match(runtime, /playSoundEffect\("firework"\)|playEffect\("firework"\)/);
-  }
+  assert.match(prototype, /musicBoxMelody/);
+  assert.match(prototype, /createMusicBoxEngine/);
+  assert.match(prototype, /playNoiseBurst/);
+  assert.match(prototype, /backgroundTrack\.volume = .*shouldMute/);
+  assert.match(prototype, /playSoundEffect\("launch"\)|playEffect\("launch"\)/);
+  assert.match(prototype, /playSoundEffect\("firework"\)|playEffect\("firework"\)/);
 });
