@@ -1,0 +1,8 @@
+{
+  "gifts": {
+    "gift_example_replace_before_use": {
+      "chatId": "<TELEGRAM_CHAT_ID>",
+      "createdAt": "2026-08-04T00:00:00.000Z"
+    }
+  }
+}
