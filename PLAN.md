@@ -622,12 +622,12 @@ Trạng thái Phase 1 sau khi thay đổi yêu cầu Scene 4–7:
 
 **Skill cần dùng:** data schema, Unicode, safe JSON serialization, XSS prevention, data URL và self-contained HTML packaging.
 
-- [ ] Chuyển toàn bộ dữ liệu cố định sang `birthdayData`.
-- [ ] Viết schema/validator và giá trị fallback.
-- [ ] Viết serializer an toàn để nhúng JSON vào HTML.
-- [ ] Gom CSS, JavaScript, nhạc và dữ liệu thành một HTML cuối cùng.
-- [ ] Bảo đảm runtime không còn phụ thuộc file hoặc CDN bên ngoài.
-- [ ] Tạo ít nhất hai fixture dữ liệu có tên/lời nhắn dài ngắn khác nhau.
+- [x] Chuyển toàn bộ dữ liệu cố định sang `birthdayData`.
+- [x] Viết schema/validator và giá trị fallback.
+- [x] Viết serializer an toàn để nhúng JSON vào HTML.
+- [x] Gom CSS, JavaScript, nhạc và dữ liệu thành một HTML cuối cùng.
+- [x] Bảo đảm runtime không còn phụ thuộc file hoặc CDN bên ngoài.
+- [x] Tạo ít nhất hai fixture dữ liệu có tên/lời nhắn dài ngắn khác nhau.
 
 Hoàn thành khi:
 
@@ -761,6 +761,17 @@ Local MVP chỉ được xem là xong khi:
 - [ ] Gửi wish thành công qua API local khi được cấu hình; lỗi mạng không chặn finale.
 - [ ] Không còn lỗi console nghiêm trọng, request gửi trùng, timer/event listener/RAF/Canvas bị nhân đôi hoặc animation tiếp tục chạy sau khi rời scene.
 - [ ] Có ít nhất một file mẫu được tạo và kiểm thử end-to-end.
+
+## 11.1. Cập nhật tiến độ UX — 04/08/2026
+
+- [x] Làm mượt luồng mở quà: Scene 1 được render phía sau lớp bóng bay khi overlay còn che kín, sau đó mới fade overlay; không còn frame lóe form nhập mật khẩu.
+- [x] Tối ưu lớp chuyển cảnh bóng bay theo hướng nhẹ và đồng nhất với bảng màu pastel.
+- [x] Chuyển Scene 1 sang nền pastel xuyên suốt, bỏ nền tối/khối tối ở trung tâm để kết nối với phần còn lại của trải nghiệm.
+- [x] Đổi hiệu ứng Scene 1 từ initials sang từng từ trong tên người nhận (ví dụ: “Phạm” → “Trường” → “Giang”); mỗi từ xuất hiện, phóng to rồi tan dần theo nhịp cinematic.
+- [x] Điều chỉnh typography responsive cho từ dài, tránh tràn màn hình trên desktop và mobile.
+- [x] Đồng bộ thay đổi cho React preview và file HTML prototype tự chứa.
+- [x] Chạy `npm.cmd test`: build thành công, 8/8 test pass.
+- [ ] QA trực quan lại trên Chrome/Edge ở viewport desktop và mobile để chốt cảm giác nhịp chuyển động.
 
 ## 12. Thứ tự thực hiện ngay
 

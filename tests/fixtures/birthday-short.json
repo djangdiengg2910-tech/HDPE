@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "recipientName": "Lê An",
+  "initials": ["L", "A"],
+  "birthday": "2010-02-03",
+  "message": "Chúc An có một ngày sinh nhật thật vui! ✦",
+  "portraitAscii": {
+    "text": "  .-.\n (o o)\n | O |\n  |   |\n   `~~~'",
+    "colorRows": null,
+    "columns": 24,
+    "inverted": false
+  },
+  "theme": "cosmic-blue",
+  "defaultMusicDataUrl": null,
+  "launchSoundDataUrl": null,
+  "giftId": "gift_le_an_2010",
+  "wishEndpoint": "http://127.0.0.1:8787/api/wishes"
+}

@@ -1,5 +1,17 @@
 # Birthday template
 
-`prototype.html` là file người nhận của Phase 1. Nó có dữ liệu cố định, chạy bằng double-click trong trình duyệt và không phụ thuộc CDN, server hay Telegram.
+`prototype.html` is the self-contained recipient template and an executable
+default sample. Its only recipient-specific payload is the
+`<script id="birthday-data" type="application/json">` block.
 
-Phase 2 sẽ thay dữ liệu cố định bằng khối `birthdayData` được Generator serialize an toàn, rồi dùng template này làm nguồn để xuất từng file quà.
+Use the marker-preserving renderer to package a fixture or future Generator
+form data into a final HTML file:
+
+```powershell
+node scripts/render-birthday-html.mjs tests/fixtures/birthday-short.json outputs/HappyBirthday_LeAn.html
+```
+
+The renderer validates the schema, escapes JSON for an HTML script context,
+embeds the two MP3 files in `public/audio/` as data URLs, and rejects external
+asset references. Run `npm run sync:template-audio` after replacing either
+default MP3 so `prototype.html` remains directly executable too.

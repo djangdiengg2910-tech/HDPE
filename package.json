@@ -9,9 +9,10 @@
     "dev": "node ./scripts/dev.mjs",
     "dev:generator": "vinext dev",
     "dev:wish": "node ./wish-api/server.mjs",
+    "sync:template-audio": "node ./scripts/embed-template-audio.mjs",
     "build": "vinext build",
     "start": "vinext start",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs",
+    "test": "npm run build && node --test tests/rendered-html.test.mjs tests/template-phase2.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate"
   },

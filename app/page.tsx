@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { defaultBirthdayData } from "@/shared/birthday-schema.mjs";
 
 type CanvasMode = "space" | "reveal" | "wish" | "cake" | "finale";
 type WishStatus =
@@ -29,35 +30,282 @@ type StageControls = {
   reset: () => void;
 };
 
-const birthdayData = {
-  recipientName: "Phạm Trường Giang",
-  initials: ["P", "T", "G"],
-  birthday: "2004-08-15",
-  message:
-    "Mong bạn luôn giữ được sự tò mò, sự tử tế và bản lĩnh đi đến nơi bạn muốn.\n\nTuổi mới không cần hoàn hảo — chỉ cần có thêm những chuyến đi đáng nhớ, những người thật lòng, và thật nhiều ngày mà bạn thấy mình đang sống đúng ý.\n\nHappy birthday. Cứ rực rỡ theo cách của riêng bạn nhé ✦",
-} as const;
+type SoundEffect = "candle" | "launch" | "firework";
 
-const portraitAscii = String.raw`
-                 .:-=+++=-:.                 
-             .-*%@@@@@@@@@@%*-.              
-           .=%@@@@@@@@@@@@@@@@%=.            
-          -%@@@@@@@%%%%%@@@@@@@%-            
-         =@@@@@@@%*=-::-=*%@@@@@@=           
-        +@@@@@@@+.  .--.  .+@@@@@@+          
-       =@@@@@@@=   -@@@@-   =@@@@@@=         
-       %@@@@@@@.   :@@@@:   .@@@@@@@%        
-      :@@@@@@@%     ....     %@@@@@@@:       
-      -@@@@@@@%  .-======-.  %@@@@@@@-       
-      :@@@@@@@%  =@@@%%@@@=  %@@@@@@@:       
-       %@@@@@@@.  .=****=.  .@@@@@@@%        
-       =@@@@@@@=     ..     =@@@@@@=         
-        +@@@@@@@+.        .+@@@@@@+          
-         =@@@@@@@%*=-::-=*%@@@@@@=           
-          -%@@@@@@@@%%%%@@@@@@@@%-            
-           .=%@@@@@@@@@@@@@@@@%=.             
-             .-*%@@@@@@@@@@%*-.               
-                 .:-=+++=-:.                  
-`;
+type MusicBoxEngine = {
+  context: AudioContext;
+  playEffect: (effect: SoundEffect) => void;
+  setMuted: (muted: boolean) => void;
+  restartAtBeginning: () => void;
+  stop: () => void;
+};
+
+const birthdayData = defaultBirthdayData;
+const previewMusicUrl = "/audio/happy-birthday-music-box.mp3";
+const previewLaunchSoundUrl = "/audio/wish-rocket-launch.mp3";
+const INTRO_STAGGER_MS = 1080;
+
+function getIntroDuration(initialCount: number, reducedMotion: boolean) {
+  if (reducedMotion) return 900;
+  return Math.max(3000, Math.max(1, initialCount) * INTRO_STAGGER_MS + 650);
+}
+
+const musicBoxMelody = [
+  659.25, 783.99, 880, 783.99, 659.25, 587.33, 659.25, 523.25,
+  587.33, 659.25, 783.99, 698.46, 659.25, 587.33, 523.25, 0,
+];
+
+function scheduleMusicBoxTone(
+  context: AudioContext,
+  destination: AudioNode,
+  time: number,
+  frequency: number,
+  duration: number,
+  volume: number,
+) {
+  const envelope = context.createGain();
+  const overtoneGain = context.createGain();
+  const tone = context.createOscillator();
+  const overtone = context.createOscillator();
+
+  envelope.gain.setValueAtTime(0.0001, time);
+  envelope.gain.exponentialRampToValueAtTime(Math.max(0.0002, volume), time + 0.012);
+  envelope.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+  overtoneGain.gain.value = 0.18;
+  tone.type = "sine";
+  overtone.type = "sine";
+  tone.frequency.setValueAtTime(frequency, time);
+  overtone.frequency.setValueAtTime(frequency * 2.01, time);
+  tone.connect(envelope);
+  overtone.connect(overtoneGain);
+  overtoneGain.connect(envelope);
+  envelope.connect(destination);
+  tone.start(time);
+  overtone.start(time);
+  tone.stop(time + duration + 0.04);
+  overtone.stop(time + duration + 0.04);
+}
+
+function scheduleWindingTick(context: AudioContext, destination: AudioNode, time: number) {
+  [0, 0.085].forEach((offset, index) => {
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    const tickAt = time + offset;
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(index ? 1420 : 1180, tickAt);
+    gain.gain.setValueAtTime(0.0001, tickAt);
+    gain.gain.exponentialRampToValueAtTime(0.006, tickAt + 0.003);
+    gain.gain.exponentialRampToValueAtTime(0.0001, tickAt + 0.045);
+    oscillator.connect(gain);
+    gain.connect(destination);
+    oscillator.start(tickAt);
+    oscillator.stop(tickAt + 0.055);
+  });
+}
+
+function playNoiseBurst(
+  context: AudioContext,
+  destination: AudioNode,
+  time: number,
+  duration: number,
+  volume: number,
+  filterType: BiquadFilterType,
+  filterFrequency: number,
+) {
+  const frameCount = Math.max(1, Math.ceil(context.sampleRate * duration));
+  const buffer = context.createBuffer(1, frameCount, context.sampleRate);
+  const samples = buffer.getChannelData(0);
+  for (let index = 0; index < samples.length; index += 1) {
+    const decay = 1 - index / samples.length;
+    samples[index] = (Math.random() * 2 - 1) * decay * decay;
+  }
+
+  const source = context.createBufferSource();
+  const filter = context.createBiquadFilter();
+  const gain = context.createGain();
+  source.buffer = buffer;
+  filter.type = filterType;
+  filter.frequency.setValueAtTime(filterFrequency, time);
+  gain.gain.setValueAtTime(Math.max(0.0001, volume), time);
+  gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+  source.connect(filter);
+  filter.connect(gain);
+  gain.connect(destination);
+  source.start(time);
+  source.stop(time + duration + 0.03);
+}
+
+function playSweep(
+  context: AudioContext,
+  destination: AudioNode,
+  time: number,
+  startFrequency: number,
+  endFrequency: number,
+  duration: number,
+  volume: number,
+) {
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(startFrequency, time);
+  oscillator.frequency.exponentialRampToValueAtTime(endFrequency, time + duration);
+  gain.gain.setValueAtTime(0.0001, time);
+  gain.gain.exponentialRampToValueAtTime(volume, time + 0.018);
+  gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+  oscillator.connect(gain);
+  gain.connect(destination);
+  oscillator.start(time);
+  oscillator.stop(time + duration + 0.04);
+}
+
+function createMusicBoxEngine(
+  musicUrl?: string | null,
+  launchSoundUrl?: string | null,
+  muted = false,
+): MusicBoxEngine {
+  const context = new window.AudioContext();
+  const master = context.createGain();
+  const music = context.createGain();
+  const effects = context.createGain();
+  master.gain.setValueAtTime(0.0001, context.currentTime);
+  music.gain.value = 0.92;
+  effects.gain.value = 0.86;
+  music.connect(master);
+  effects.connect(master);
+  master.connect(context.destination);
+  const backgroundTrack = musicUrl ? new Audio(musicUrl) : null;
+  if (backgroundTrack) {
+    backgroundTrack.loop = true;
+    backgroundTrack.volume = muted ? 0 : 0.46;
+    backgroundTrack.preload = "auto";
+  }
+
+  let stopped = false;
+  let scheduler: number | null = null;
+  let nextNoteAt = context.currentTime + 0.06;
+  let melodyStep = 0;
+  let useSynthFallback = !backgroundTrack;
+  let resumeBackgroundTrack = false;
+
+  const scheduleMusic = () => {
+    scheduler = null;
+    if (stopped || !useSynthFallback || document.visibilityState === "hidden") return;
+
+    while (nextNoteAt < context.currentTime + 0.75) {
+      const frequency = musicBoxMelody[melodyStep % musicBoxMelody.length];
+      if (frequency) scheduleMusicBoxTone(context, music, nextNoteAt, frequency, 0.34, 0.028);
+      if (melodyStep % musicBoxMelody.length === 0) scheduleWindingTick(context, music, nextNoteAt);
+      melodyStep += 1;
+      nextNoteAt += 0.39;
+    }
+    scheduler = window.setTimeout(scheduleMusic, 110);
+  };
+
+  const onVisibilityChange = () => {
+    if (document.visibilityState === "hidden") {
+      if (scheduler != null) window.clearTimeout(scheduler);
+      scheduler = null;
+      resumeBackgroundTrack = Boolean(backgroundTrack && !backgroundTrack.paused);
+      backgroundTrack?.pause();
+      context.suspend().catch(() => undefined);
+      return;
+    }
+
+    context.resume().then(() => {
+      if (stopped) return;
+      nextNoteAt = context.currentTime + 0.05;
+      if (backgroundTrack && resumeBackgroundTrack) {
+        resumeBackgroundTrack = false;
+        backgroundTrack.play().catch(() => {
+          useSynthFallback = true;
+          scheduleMusic();
+        });
+      } else {
+        scheduleMusic();
+      }
+    }).catch(() => undefined);
+  };
+
+  const playEffect = (effect: SoundEffect) => {
+    if (stopped) return;
+    const now = context.currentTime + 0.01;
+    if (effect === "candle") {
+      playNoiseBurst(context, effects, now, 0.34, 0.052, "highpass", 1350);
+      playSweep(context, effects, now, 370, 180, 0.24, 0.018);
+      return;
+    }
+    const playSynthLaunch = () => {
+      const launchAt = context.currentTime + 0.01;
+      playSweep(context, effects, launchAt, 210, 1560, 0.72, 0.055);
+      playNoiseBurst(context, effects, launchAt, 0.72, 0.035, "highpass", 820);
+      scheduleMusicBoxTone(context, effects, launchAt + 0.25, 1046.5, 0.2, 0.018);
+    };
+    if (effect === "launch") {
+      if (launchSoundUrl) {
+        const launchClip = new Audio(launchSoundUrl);
+        launchClip.volume = 0.8;
+        launchClip.playbackRate = 1.25;
+        launchClip.play().catch(playSynthLaunch);
+      } else {
+        playSynthLaunch();
+      }
+      return;
+    }
+
+    const fireworkSpeed = 1.9;
+    playSweep(context, effects, now, 118, 46, 0.62 / fireworkSpeed, 0.06);
+    playNoiseBurst(context, effects, now, 0.62 / fireworkSpeed, 0.14, "lowpass", 620);
+    [0.13, 0.28, 0.47].forEach((offset, index) => {
+      playNoiseBurst(context, effects, now + offset / fireworkSpeed, 0.09 / fireworkSpeed, 0.055 - index * 0.008, "highpass", 1600 + index * 500);
+      scheduleMusicBoxTone(context, effects, now + offset / fireworkSpeed, 1120 + index * 220, 0.12 / fireworkSpeed, 0.012);
+    });
+  };
+
+  const setMuted = (shouldMute: boolean) => {
+    if (backgroundTrack) backgroundTrack.volume = shouldMute ? 0 : 0.46;
+    master.gain.cancelScheduledValues(context.currentTime);
+    master.gain.setTargetAtTime(shouldMute ? 0.0001 : 0.1, context.currentTime, shouldMute ? 0.02 : 0.11);
+  };
+
+  const restartAtBeginning = () => {
+    if (backgroundTrack) backgroundTrack.currentTime = 0;
+    nextNoteAt = context.currentTime + 0.06;
+    melodyStep = 0;
+    setMuted(false);
+    if (useSynthFallback) {
+      if (scheduler != null) window.clearTimeout(scheduler);
+      scheduler = null;
+      scheduleMusic();
+    }
+  };
+
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+    if (scheduler != null) window.clearTimeout(scheduler);
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+    backgroundTrack?.pause();
+    if (backgroundTrack) backgroundTrack.currentTime = 0;
+    master.gain.cancelScheduledValues(context.currentTime);
+    master.gain.setTargetAtTime(0.0001, context.currentTime, 0.08);
+    window.setTimeout(() => context.close().catch(() => undefined), 220);
+  };
+
+  document.addEventListener("visibilitychange", onVisibilityChange);
+  context.resume().then(() => {
+    master.gain.exponentialRampToValueAtTime(muted ? 0.0001 : 0.1, context.currentTime + 0.4);
+    if (!backgroundTrack) {
+      scheduleMusic();
+      return;
+    }
+    backgroundTrack.play().catch(() => {
+      useSynthFallback = true;
+      scheduleMusic();
+    });
+  }).catch(() => undefined);
+
+  return { context, playEffect, setMuted, restartAtBeginning, stop };
+}
 
 const sceneNames = [
   "Dramatic intro",
@@ -281,6 +529,7 @@ function CosmicStage({
   vesselPhase,
   reducedMotion,
   controlsRef,
+  onFireworkBurst,
 }: {
   active: boolean;
   mode: number;
@@ -288,17 +537,20 @@ function CosmicStage({
   vesselPhase: VesselPhase;
   reducedMotion: boolean;
   controlsRef: { current: StageControls | null };
+  onFireworkBurst: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const modeRef = useRef(mode);
   const candleOutRef = useRef(candleOut);
   const vesselPhaseRef = useRef(vesselPhase);
+  const onFireworkBurstRef = useRef(onFireworkBurst);
 
   useEffect(() => {
     modeRef.current = mode;
     candleOutRef.current = candleOut;
     vesselPhaseRef.current = vesselPhase;
-  }, [candleOut, mode, vesselPhase]);
+    onFireworkBurstRef.current = onFireworkBurst;
+  }, [candleOut, mode, onFireworkBurst, vesselPhase]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -478,7 +730,7 @@ function CosmicStage({
         size *= 0.78 + arrival * 0.22;
       } else if (stageMode === 5 && candleOutRef.current) {
         if (!candleStartedAt) candleStartedAt = time;
-        const launch = Math.min(1, (time - candleStartedAt) / (reducedMotion ? 1 : 3600));
+        const launch = Math.min(1, (time - candleStartedAt) / (reducedMotion ? 1 : 3150));
         x = width * 0.5;
         y = height * 0.47 - launch * launch * height * 1.88;
         rotation = 0;
@@ -616,8 +868,11 @@ function CosmicStage({
       drawBackdrop(time);
       if (stageMode <= 5) drawCake(time, stageMode);
       if (stageMode >= 4 && stageMode <= 5) drawVessel(time, stageMode);
-      if (stageMode === 5 && candleOutRef.current && candleStartedAt && time - candleStartedAt >= (reducedMotion ? 1 : 3420)) {
-        if (!burstStartedAt) burstStartedAt = time;
+      if (stageMode === 5 && candleOutRef.current && candleStartedAt && time - candleStartedAt >= (reducedMotion ? 1 : 3050)) {
+        if (!burstStartedAt) {
+          burstStartedAt = time;
+          onFireworkBurstRef.current();
+        }
         drawFirework(time);
       }
       if (!reducedMotion) frame = requestAnimationFrame(draw);
@@ -720,6 +975,46 @@ function BearAntics() {
   );
 }
 
+function seededBalloonRandom(index: number, salt: number) {
+  const value = Math.sin((index + 1) * 12.9898 + salt * 78.233) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function UnlockBalloonTransition({ reducedMotion }: { reducedMotion: boolean }) {
+  const palette = ["#f5b4c5", "#ffc8ab", "#ffe3a4", "#edbed0", "#f4c2ae", "#eac5df", "#f7d2aa", "#f1b5ba"];
+
+  return (
+    <div className="unlock-balloon-transition" aria-hidden="true">
+      {Array.from({ length: reducedMotion ? 10 : 42 }, (_, index) => {
+        const horizontal = seededBalloonRandom(index, 1);
+        const vertical = seededBalloonRandom(index, 2);
+        const depth = Math.floor(seededBalloonRandom(index, 3) * 4);
+        const sizeSeed = seededBalloonRandom(index, 4);
+        const size = depth === 0
+          ? 5.1 + sizeSeed * 1.15
+          : depth === 1
+            ? 3.45 + sizeSeed * 1.2
+            : 2.05 + sizeSeed * 1.05;
+        return (
+          <span
+            key={index}
+            className={`unlock-transition-balloon balloon-depth-${depth} ${index % 2 ? "drift-left" : "drift-right"}`}
+            style={{
+              left: `${horizontal * 110 - 5}%`,
+              bottom: `${-42 + vertical * 25}dvh`,
+              width: `${size}rem`,
+              height: `${size * 1.22}rem`,
+              background: palette[index % palette.length],
+              animationDelay: `${seededBalloonRandom(index, 5) * 220}ms`,
+              animationDuration: `${reducedMotion ? 1 : 1320 + seededBalloonRandom(index, 6) * 230}ms`,
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 function getCanvasMode(scene: number): CanvasMode {
   if (scene === 1) return "reveal";
   return "space";
@@ -736,15 +1031,13 @@ function getWishStatusText(status: WishStatus) {
 
 export default function Home() {
   const reducedMotion = useReducedMotion();
-  const audioRef = useRef<{
-    context: AudioContext;
-    gain: GainNode;
-    oscillators: OscillatorNode[];
-  } | null>(null);
+  const audioRef = useRef<MusicBoxEngine | null>(null);
   const stageControlsRef = useRef<StageControls | null>(null);
   const wishTimerRef = useRef<number | null>(null);
+  const unlockTimerRef = useRef<number | null>(null);
 
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [isUnlocking, setIsUnlocking] = useState(false);
   const [dateInput, setDateInput] = useState("");
   const [dateError, setDateError] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -756,48 +1049,34 @@ export default function Home() {
   const [musicOn, setMusicOn] = useState(false);
 
   const birthdayDigits = useMemo(() => getBirthdayDigits(birthdayData.birthday), []);
-
+  const introWords = useMemo(() => birthdayData.recipientName.trim().split(/\s+/).filter(Boolean), []);
+  const introWordCount = introWords.length;
   const stopMusic = useCallback(() => {
     const sound = audioRef.current;
     if (!sound) return;
-
-    const now = sound.context.currentTime;
-    sound.gain.gain.cancelScheduledValues(now);
-    sound.gain.gain.setTargetAtTime(0.0001, now, 0.08);
-    window.setTimeout(() => {
-      sound.oscillators.forEach((oscillator) => oscillator.stop());
-      sound.context.close().catch(() => undefined);
-    }, 180);
+    sound.stop();
     audioRef.current = null;
   }, []);
 
-  const turnMusicOn = useCallback(() => {
-    if (audioRef.current || typeof window === "undefined") return;
+  const turnMusicOn = useCallback((muted = false, restartAtBeginning = false) => {
+    if (typeof window === "undefined") return;
+    if (audioRef.current) {
+      if (restartAtBeginning) audioRef.current.restartAtBeginning();
+      else audioRef.current.setMuted(muted);
+      setMusicOn(!muted);
+      return;
+    }
 
     try {
-      const AudioContextConstructor = window.AudioContext;
-      const context = new AudioContextConstructor();
-      const gain = context.createGain();
-      gain.gain.value = 0.0001;
-      gain.connect(context.destination);
-
-      const oscillators = [130.81, 196, 261.63].map((frequency, index) => {
-        const oscillator = context.createOscillator();
-        oscillator.type = index === 1 ? "triangle" : "sine";
-        oscillator.frequency.value = frequency;
-        oscillator.detune.value = index === 2 ? 7 : 0;
-        oscillator.connect(gain);
-        oscillator.start();
-        return oscillator;
-      });
-
-      gain.gain.exponentialRampToValueAtTime(0.018, context.currentTime + 0.75);
-      context.resume().catch(() => undefined);
-      audioRef.current = { context, gain, oscillators };
-      setMusicOn(true);
+      audioRef.current = createMusicBoxEngine(previewMusicUrl, previewLaunchSoundUrl, muted);
+      setMusicOn(!muted);
     } catch {
       setMusicOn(false);
     }
+  }, []);
+
+  const playSoundEffect = useCallback((effect: SoundEffect) => {
+    audioRef.current?.playEffect(effect);
   }, []);
 
   useEffect(() => () => stopMusic(), [stopMusic]);
@@ -815,12 +1094,16 @@ export default function Home() {
     if (wishTimerRef.current) window.clearTimeout(wishTimerRef.current);
   }, []);
 
+  useEffect(() => () => {
+    if (unlockTimerRef.current) window.clearTimeout(unlockTimerRef.current);
+  }, []);
+
   useEffect(() => {
     if (!isUnlocked || scene !== 0) return;
-    const introDuration = reducedMotion ? 2200 : birthdayData.initials.length * 1350 + 1750;
+    const introDuration = getIntroDuration(introWordCount, reducedMotion);
     const timeout = window.setTimeout(() => setScene(1), introDuration);
     return () => window.clearTimeout(timeout);
-  }, [isUnlocked, reducedMotion, scene]);
+  }, [introWordCount, isUnlocked, reducedMotion, scene]);
 
   useEffect(() => {
     if (!isUnlocked || scene !== 1) return;
@@ -836,6 +1119,7 @@ export default function Home() {
 
   const unlockGift = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isUnlocking) return;
     const normalizedInput = normalizeDateInput(dateInput);
     if (normalizedInput !== birthdayDigits) {
       setAttempt((count) => count + 1);
@@ -844,8 +1128,16 @@ export default function Home() {
     }
 
     setDateError(false);
-    setIsUnlocked(true);
-    turnMusicOn();
+    setIsUnlocking(true);
+    turnMusicOn(true);
+    unlockTimerRef.current = window.setTimeout(() => {
+      setIsUnlocked(true);
+      turnMusicOn(false, true);
+      unlockTimerRef.current = window.setTimeout(() => {
+        setIsUnlocking(false);
+        unlockTimerRef.current = null;
+      }, reducedMotion ? 1 : 420);
+    }, reducedMotion ? 180 : 1280);
   };
 
   const toggleMusic = () => {
@@ -855,6 +1147,13 @@ export default function Home() {
     } else {
       turnMusicOn();
     }
+  };
+
+  const blowOutCandle = () => {
+    if (candleOut) return;
+    playSoundEffect("candle");
+    window.setTimeout(() => playSoundEffect("launch"), reducedMotion ? 1 : 260);
+    setCandleOut(true);
   };
 
   const moveTo = (nextScene: number) => {
@@ -913,11 +1212,15 @@ export default function Home() {
     setCandleOut(false);
   };
 
+  const unlockTransition = isUnlocking ? <UnlockBalloonTransition reducedMotion={reducedMotion} /> : null;
+
   if (!isUnlocked) {
     return (
-      <main className="birthday-page lock-page">
-        <CelebrationCanvas mode="space" reducedMotion={reducedMotion} />
-        <section className="lock-card" aria-labelledby="lock-title">
+      <>
+        {unlockTransition}
+        <main className="birthday-page lock-page">
+          <CelebrationCanvas mode="space" reducedMotion={reducedMotion} />
+          <section className="lock-card" aria-labelledby="lock-title">
           <div className="lock-orb" aria-hidden="true"><span /></div>
           <p className="eyebrow">A private little universe</p>
           <h1 id="lock-title">Có một món quà đang chờ bạn.</h1>
@@ -942,19 +1245,22 @@ export default function Home() {
             <p id="date-error" className="form-error" role="status">
               {dateError ? "Chưa đúng rồi — thử lại một lần nữa nhé." : " "}
             </p>
-            <button className="primary-button" type="submit">
+            <button className="primary-button" type="submit" disabled={isUnlocking}>
               Mở món quà <span aria-hidden="true">→</span>
             </button>
           </form>
           <span className="attempt-marker" aria-hidden="true">{attempt > 0 ? "✦" : ""}</span>
-          <BearTrio placement="lock" />
-        </section>
-      </main>
+            <BearTrio placement="lock" />
+          </section>
+        </main>
+      </>
     );
   }
 
   return (
-    <main className={`birthday-page scene-${scene + 1}`}>
+    <>
+      {unlockTransition}
+      <main className={`birthday-page scene-${scene + 1}`}>
       <CelebrationCanvas mode={getCanvasMode(scene)} reducedMotion={reducedMotion} />
       <div className="experience-shell">
         <PartyDecorations />
@@ -964,7 +1270,7 @@ export default function Home() {
             <span className="ascii-dot" aria-hidden="true" />
             <span>birthday glow</span>
           </div>
-          <pre className="ascii-portrait">{portraitAscii}</pre>
+          <pre className="ascii-portrait">{birthdayData.portraitAscii.text}</pre>
           <div className="ascii-caption">
             <strong>{birthdayData.recipientName}</strong>
             <span>pastel bloom / 01</span>
@@ -979,6 +1285,7 @@ export default function Home() {
             vesselPhase={vesselPhase}
             reducedMotion={reducedMotion}
             controlsRef={stageControlsRef}
+            onFireworkBurst={() => playSoundEffect("firework")}
           />
           <header className="scene-header">
             <div>
@@ -999,9 +1306,11 @@ export default function Home() {
             {scene === 0 && (
               <section className="intro-scene cinematic-intro" aria-labelledby="scene-title">
                 <p className="intro-lead">Một điều bất ngờ đang tiến lại gần...</p>
-                <div className="initials-orbit cinematic-initials" aria-label={`Initials ${birthdayData.initials.join(" ")}`}>
-                  {birthdayData.initials.map((initial, index) => (
-                    <span key={`${initial}-${index}`} aria-hidden="true" style={{ animationDelay: `${index * 1.35}s` }}>{initial}</span>
+                <div className="initials-orbit cinematic-initials" aria-label={`Tên ${introWords.join(" ")}`}>
+                  {introWords.map((word, index) => (
+                    <span key={`${word}-${index}`} aria-hidden="true" style={{ animationDelay: `${index * INTRO_STAGGER_MS}ms` }}>
+                      <i>{word}</i>
+                    </span>
                   ))}
                 </div>
                 <button className="text-button" type="button" onClick={() => moveTo(1)}>Bỏ qua hiệu ứng</button>
@@ -1031,7 +1340,7 @@ export default function Home() {
 
             {scene === 3 && (
               <section className="cake-scene cosmic-scene" aria-labelledby="scene-title">
-                <p className="scene-copy">Một chiếc bánh point-cloud đang hội tụ từ bụi sao. Kéo trực tiếp để ngắm kỹ hơn.</p>
+                <p className="scene-copy">Sếp của chúng tôi đã đích thân chuẩn bị chiếc bánh cho ngày đặc biệt này.</p>
                 <div
                   className="cake-explorer"
                   tabIndex={0}
@@ -1089,10 +1398,10 @@ export default function Home() {
             {scene === 5 && (
               <section className="blow-scene cosmic-scene" aria-labelledby="scene-title">
                 <p className="eyebrow">one last little thing</p>
-                <h2 id="scene-title">Chạm vào ngọn nến để thổi nào.</h2>
+                <h2 id="scene-title">{"Chạm vào ngọn\u00a0nến để thổi nào."}</h2>
                 <div className={`candle-stage cosmic-candle-stage ${candleOut ? "candle-blown" : ""}`}>
                   {!candleOut && (
-                    <button className="candle-trigger" type="button" onClick={() => setCandleOut(true)}>
+                    <button className="candle-trigger" type="button" onClick={blowOutCandle}>
                       <span className="sr-only">Thổi tắt ngọn nến</span>
                     </button>
                   )}
@@ -1116,6 +1425,7 @@ export default function Home() {
           </div>
         </section>
       </div>
-    </main>
+      </main>
+    </>
   );
 }

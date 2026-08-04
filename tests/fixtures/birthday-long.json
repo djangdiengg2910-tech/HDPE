@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "recipientName": "Nguyễn Thị Minh Anh và những vì sao lấp lánh",
+  "initials": ["N", "T", "M", "A", "V", "N", "V", "S", "L", "L"],
+  "birthday": "1998-12-31",
+  "message": "Minh Anh thân mến,\n\nChúc bạn luôn đủ dũng cảm để giữ những điều dịu dàng, đủ tò mò để đi xa, và đủ bình yên để nhận ra mọi điều tốt đẹp đang ở rất gần. Đoạn này cố ý dài để kiểm tra thẻ lời chúc vẫn cuộn tốt trên màn hình nhỏ.\n\nDòng thử an toàn: <strong>không phải HTML</strong>, \"dấu nháy kép\", 'dấu nháy đơn' và </script><script>window.xss = true</script>.\n\nMừng sinh nhật thật rực rỡ ✨",
+  "portraitAscii": {
+    "text": "✦  *  ✦\n  /|/\n ( •_• )\n  / /\n✦  *  ✦",
+    "colorRows": ["#ffd678", "#9c7cff", "#78ece2", "#ff9bc2", "#ffd678"],
+    "columns": 48,
+    "inverted": true
+  },
+  "theme": "cosmic-blue",
+  "defaultMusicDataUrl": null,
+  "launchSoundDataUrl": null,
+  "giftId": "gift_minh-anh_1998",
+  "wishEndpoint": "http://127.0.0.1:8787/api/wishes"
+}

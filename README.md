@@ -26,6 +26,18 @@ Hai file local trên bị Git ignore. Bot token và `chatId` tuyệt đối khô
 - `scripts/dev.mjs`: chạy Generator và Wish API trong một lệnh.
 - `outputs/`: nơi lưu file quà sinh ra khi test, không commit.
 
+## Đóng gói template (Phase 2)
+
+`prototype.html` có một khối JSON duy nhất cho dữ liệu người nhận. Có thể đóng
+gói fixture hoặc JSON từ Generator thành HTML tự chứa bằng lệnh sau:
+
+```powershell
+node scripts/render-birthday-html.mjs tests/fixtures/birthday-short.json outputs/HappyBirthday_LeAn.html
+```
+
+Schema, fallback, serializer chống `</script>`/XSS và hai fixture kiểm thử nằm
+trong `shared/` và `tests/fixtures/`.
+
 ## Kiểm tra
 
 - `npm run build`: kiểm tra Generator có build được.

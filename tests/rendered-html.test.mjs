@@ -38,10 +38,11 @@ test("server-renders the birthday prototype instead of the starter skeleton", as
 });
 
 test("keeps fixed birthday data and seven-scene runtime inside the product surface", async () => {
-  const [page, layout, packageJson] = await Promise.all([
+  const [page, layout, packageJson, styles] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("./package.json", templateRoot), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /const birthdayData/);
@@ -50,7 +51,20 @@ test("keeps fixed birthday data and seven-scene runtime inside the product surfa
   assert.match(page, /normalizeDateInput/);
   assert.match(page, /CelebrationCanvas/);
   assert.match(page, /function CosmicStage/);
-  assert.match(page, /point-cloud/);
+  assert.match(page, /function UnlockBalloonTransition/);
+  assert.match(page, /isUnlocking/);
+  assert.match(page, /length: reducedMotion \? 10 : 42/);
+  assert.match(page, /turnMusicOn\(true\)/);
+  assert.match(page, /turnMusicOn\(false, true\)/);
+  assert.match(page, /reducedMotion \? 180 : 1280/);
+  assert.match(page, /setIsUnlocking\(false\)/);
+  assert.match(page, /const introWords = useMemo/);
+  assert.match(page, /introWords\.map/);
+  assert.match(styles, /\.cinematic-initials span \{[\s\S]*?position: absolute;/);
+  assert.match(styles, /animation: cinematic-letter-pass 1\.54s/);
+  assert.doesNotMatch(styles, /font-size: clamp\(13rem, 38vw, 33rem\)/);
+  assert.doesNotMatch(styles, /scale\(1\.21\)/);
+  assert.match(page, /Sếp của chúng tôi đã đích thân chuẩn bị chiếc bánh/);
   assert.match(page, /visibilitychange/);
   assert.match(page, /setPointerCapture/);
   assert.match(page, /sealWishInBottle/);
@@ -76,7 +90,32 @@ test("keeps the recipient prototype as one self-contained HTML file", async () =
   assert.match(prototype, /wish-letter-stage/);
   assert.match(prototype, /rocket-bottle/);
   assert.match(prototype, /firework-overlay/);
+  assert.match(prototype, /id="unlock-transition"/);
+  assert.match(prototype, /showUnlockBalloons/);
+  assert.match(prototype, /balloon-flood-right/);
+  assert.match(prototype, /const count = reducedMotion \? 10 : 42/);
+  assert.match(prototype, /showUnlockBalloons\(\); setMusic\(true, true\)/);
+  assert.match(prototype, /setMusic\(true, false, true\)/);
+  assert.match(prototype, /reducedMotion \? 180 : 1280/);
+  assert.match(prototype, /cinematic-letter-pass/);
+  assert.match(prototype, /const introWords = birthdayData\.recipientName\.trim\(\)\.split/);
   assert.doesNotMatch(prototype, /<script[^>]+\bsrc=/i);
   assert.doesNotMatch(prototype, /<link[^>]+\bhref=/i);
   assert.doesNotThrow(() => new Function(script));
+});
+
+test("keeps music-box ambience and celebration sound effects self-contained", async () => {
+  const [page, prototype] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../birthday-template/prototype.html", import.meta.url), "utf8"),
+  ]);
+
+  for (const runtime of [page, prototype]) {
+    assert.match(runtime, /musicBoxMelody/);
+    assert.match(runtime, /createMusicBoxEngine/);
+    assert.match(runtime, /playNoiseBurst/);
+    assert.match(runtime, /backgroundTrack\.volume = .*shouldMute/);
+    assert.match(runtime, /playSoundEffect\("launch"\)|playEffect\("launch"\)/);
+    assert.match(runtime, /playSoundEffect\("firework"\)|playEffect\("firework"\)/);
+  }
 });
