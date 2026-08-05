@@ -66,6 +66,7 @@ test("keeps the Phase 3 form, Canvas ASCII pipeline, sandbox preview, and Blob e
   assert.match(cursor, /prefers-reduced-motion/);
   assert.match(styles, /\.generator-grid/);
   assert.match(styles, /\.has-custom-cursor/);
+  assert.match(styles, /--cursor-hotspot-x/);
   assert.match(styles, /@media \(max-width: 920px\)/);
   assert.match(layout, /Birthday Generator — Local MVP/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);

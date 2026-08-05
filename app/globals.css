@@ -31,6 +31,8 @@ button:disabled { cursor: not-allowed; opacity: 0.62; }
     --cursor-y: -10rem;
     --cursor-scale: 1;
     --cursor-rotation: 0deg;
+    --cursor-hotspot-x: 60px;
+    --cursor-hotspot-y: 72px;
     position: fixed;
     top: 0;
     left: 0;
@@ -41,16 +43,16 @@ button:disabled { cursor: not-allowed; opacity: 0.62; }
     pointer-events: none;
     opacity: 0;
     background: url("/assets/panda-bamboo-cursor-idle.png") center / contain no-repeat;
-    transform: translate3d(var(--cursor-x), var(--cursor-y), 0) translate(-16px, -16px) scale(var(--cursor-scale)) rotate(var(--cursor-rotation));
-    transform-origin: 16px 16px;
+    transform: translate3d(var(--cursor-x), var(--cursor-y), 0) translate(calc(0px - var(--cursor-hotspot-x)), calc(0px - var(--cursor-hotspot-y))) scale(var(--cursor-scale)) rotate(var(--cursor-rotation));
+    transform-origin: var(--cursor-hotspot-x) var(--cursor-hotspot-y);
     transition: transform 115ms cubic-bezier(.2, .9, .25, 1), opacity 120ms ease;
     will-change: transform;
   }
 
   .custom-cursor.is-visible { opacity: 1; }
   .custom-cursor.is-hovering { --cursor-scale: 1.06; --cursor-rotation: -2deg; }
-  .custom-cursor.is-pressed { --cursor-scale: 0.97; --cursor-rotation: -3deg; background-image: url("/assets/panda-bamboo-cursor-paw-up.png"); }
-  .custom-cursor.is-tapping { --cursor-scale: 0.93; --cursor-rotation: 1deg; background-image: url("/assets/panda-bamboo-cursor-tap.png"); }
+  .custom-cursor.is-pressed { --cursor-scale: 0.97; --cursor-rotation: -3deg; --cursor-hotspot-x: 29px; --cursor-hotspot-y: 50px; background-image: url("/assets/panda-bamboo-cursor-paw-up.png"); }
+  .custom-cursor.is-tapping { --cursor-scale: 0.93; --cursor-rotation: 1deg; --cursor-hotspot-x: 28px; --cursor-hotspot-y: 57px; background-image: url("/assets/panda-bamboo-cursor-tap.png"); }
 }
 
 .generator-page {
